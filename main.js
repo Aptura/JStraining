@@ -1,6 +1,27 @@
 const express = require("express");
 const fs = require("fs");
+const cookieParser = require("cookie-parser");
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
+// Database with login information
+let db = [
+  {
+    pseudo: "Alice",
+    pass: "azerty+31",
+  },
+  {
+    pseudo: "Axone",
+    pass: "azerty+32",
+  },
+  {
+    pseudo: "Aptura",
+    pass: "azerty+33",
+  },
+];
+
+let cookiedb = [];
 
 // My static data
 app.use("/assets", express.static(__dirname + "/assets"));
@@ -11,16 +32,70 @@ app.get("/login", function (req, res) {
   res.send(mapage);
 });
 
-app.get("/sucess", function (req, res) {
-  let mapage = fs.readFileSync("./old/sucess.html", "utf8");
-  res.set("Content-Type", "text/html");
-  res.send(mapage);
-});
-
 app.get("/error", function (req, res) {
   let mapage = fs.readFileSync("./old/error.html", "utf8");
   res.set("Content-Type", "text/html");
   res.send(mapage);
+});
+
+app.get("/profile", function (req, res) {
+  let text = "";
+  const usercookie = req.cookies.authtoken;
+  const user = cookiedb.find((x) => x.cookie == usercookie);
+  if (!user) {
+    res.send("Ptdr t ki ?");
+    return;
+  }
+  const userdata = db.find((x) => x.pseudo == user.pseudo);
+  text = `Salut ${userdata.pseudo} ton password est ${userdata.pass} !`;
+  res.send(text);
+});
+
+function checkUserLogin(username, password) {
+  let check = db.find((x) => x.pseudo == username && x.pass == password);
+  if (check) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function createRandomString(length) {
+  let result = "";
+  let characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+function createCookie(value, day) {
+  let exp = "";
+  if (day) {
+    date = new Date();
+    date.setTime(date.getTime() + day * 24 * 60 * 60 * 1000);
+    exp = "; expires=" + date.toGMTString();
+  }
+  return "authtoken=" + value + exp + "; path=/";
+  // document.cookie = username + "=" + value +  exp + "; path=/";
+}
+
+app.post("/api/checkauth", function (req, res) {
+  const reponse = checkUserLogin(req.body.pseudo, req.body.pass);
+  if (!reponse) {
+    res.json({ error: true, message: "Euuuuhh nique ta mère" });
+    return;
+  }
+  const idCookie = createRandomString(20);
+  cookiedb.push({
+    pseudo: req.body.pseudo,
+    cookie: idCookie,
+  });
+  const headercookie = createCookie(idCookie, 1);
+  res.set("set-cookie", headercookie);
+  res.json({ error: false, message: "Ok" });
 });
 
 app.listen(3000);

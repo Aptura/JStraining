@@ -1,26 +1,30 @@
-// Database with login information
-let db = [
-  {
-    pseudo: "Alice",
-    pass: "azerty+31",
-  },
-  {
-    pseudo: "Axone",
-    pass: "azerty+32",
-  },
-  {
-    pseudo: "Aptura",
-    pass: "azerty+33",
-  },
-];
-
 // Function to check if 'username' and 'pass' are great
 function checkUserLogin(username, password) {
-  let check = db.find((x) => x.pseudo == username && x.pass == password);
-  if (check) {
-    window.location.href = "./sucess?username=" + username;
-  } else {
-    window.location.href = "./error.html";
+  let body = {
+    pseudo: username,
+    pass: password,
+  };
+  console.log(body);
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/checkauth");
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.responseType = "json";
+    xhr.onload = () => {
+      if (xhr.readyState == 4 && xhr.status == 200) {
+        const data = xhr.response;
+        if (data.error) {
+          alert(data.message);
+          return;
+        }
+        window.location.href = "/profile";
+      } else {
+        console.log(`Error: ${xhr.status}`);
+      }
+    };
+    xhr.send(JSON.stringify(body));
+  } catch (error) {
+    console.log(error);
   }
 }
 
