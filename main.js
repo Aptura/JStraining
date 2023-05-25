@@ -6,22 +6,21 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Database with login information
-let db = [
-  {
-    pseudo: "Alice",
-    pass: "azerty+31",
-  },
-  {
-    pseudo: "Axone",
-    pass: "azerty+32",
-  },
-  {
-    pseudo: "Aptura",
-    pass: "azerty+33",
-  },
-];
+let db = JSON.parse(fs.readFileSync("./db/db.json", "utf8"));
 
-let cookiedb = [];
+let cookiedb = JSON.parse(fs.readFileSync("./db/cookiedb.json", "utf8"));
+
+function saveDB() {
+  fs.writeFile("./db/db.json", JSON.stringify(db), (error) => {
+    if (error) throw error;
+  });
+
+  fs.writeFile("./db/cookiedb.json", JSON.stringify(cookiedb), (error) => {
+    if (error) throw error;
+  });
+}
+
+setInterval(() => saveDB(), 2000);
 
 // My static data
 app.use("/assets", express.static(__dirname + "/assets"));
