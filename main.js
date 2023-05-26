@@ -46,8 +46,12 @@ app.get("/profile", function (req, res) {
     return;
   }
   const userdata = db.find((x) => x.pseudo == user.pseudo);
-  text = `Salut ${userdata.pseudo} ton password est ${userdata.pass} !`;
-  res.send(text);
+  let mapage = fs.readFileSync("./old/account.html", "utf8");
+  mapage = mapage
+    .replace("__USERNAME__", user.pseudo)
+    .replace("__PASS__", userdata.pass)
+    .replace("__IMGURL__", "./assets/img/default.jpg");
+  res.send(mapage);
 });
 
 function checkUserLogin(username, password) {
