@@ -2,8 +2,30 @@ const express = require("express");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
 const app = express();
+const multer = require("multer");
+
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    if (file.mimetype == "image/png") {
+      cb(null, Date.now() + ".png");
+    } else if (file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+      cb(null, Date.now() + ".jpg");
+    } else if (file.mimetype == "image/gif") {
+      cb(null, Date.now() + ".gif"); // aptura est riche
+    } else {
+      cb(null, "hack.alice");
+    }
+  },
+});
+
+const upload = multer({ storage: storage });
+
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 // Database with login information
 let db = JSON.parse(fs.readFileSync("./db/db.json", "utf8"));
@@ -24,6 +46,7 @@ setInterval(() => saveDB(), 2000);
 
 // My static data
 app.use("/assets", express.static(__dirname + "/assets"));
+app.use("/uploads", express.static(__dirname + "/uploads"));
 
 // My website
 app.get("/login", function (req, res) {
@@ -50,9 +73,11 @@ app.get("/profile", function (req, res) {
   mapage = mapage
     .replace("__USERNAME__", user.pseudo)
     .replace("__PASS__", userdata.pass)
-    .replace("__IMGURL__", "./assets/img/default.jpg");
+    .replace("__IMGURL__", userdata.image);
   res.send(mapage);
 });
+
+app.get("/upload_files", function (req, res) {});
 
 function checkUserLogin(username, password) {
   let check = db.find((x) => x.pseudo == username && x.pass == password);
@@ -61,6 +86,32 @@ function checkUserLogin(username, password) {
   } else {
     return false;
   }
+}
+
+app.post("/upload_files", upload.array("files"), uploadFiles);
+
+function uploadFiles(req, res) {
+  console.log(req.body);
+  console.log(req.files);
+  for (const file of req.files) {
+    if (file.filename == "hack.alice") {
+      fs.unlinkSync("./uploads/hack.alice");
+    }
+  }
+  // update user database
+  const usercookie = req.cookies.authtoken;
+  const user = cookiedb.find((x) => x.cookie == usercookie);
+  if (!user) {
+    res.send("Ptdr t ki ?");
+    return;
+  }
+  db.find((x) => x.pseudo == user.pseudo).image =
+    "/uploads/" + req.files[0].filename;
+
+  res.json({
+    message: "Successfully uploaded files",
+    imagepath: "/uploads/" + req.files[0].filename,
+  });
 }
 
 function createRandomString(length) {

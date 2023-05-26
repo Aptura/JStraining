@@ -9,8 +9,14 @@
 <body>
     <h1>Hello __USERNAME__</h1>
     <p>ton mot de passe est : __PASS__ !</p>
-    <input type="file" id="avatar" name="avatar" accept="image/png, image/jpeg, image/jpg">
-    <img src="__IMGURL__">
-    <script defer src="/assets/js/script.js"></script>
+    <form action='/upload_files' enctype='multipart/form-data' id='form'>
+        <div class="input-group">
+            <label for='files'>Select files</label>
+            <input id='files' type="file" multiple>
+        </div>
+        <button class="submit-btn" type='submit'>Upload</button>
+    </form>
+    <img id="profilepicture" width="150px" height="150px" src="__IMGURL__">
+    <script defer src="/assets/js/profile.js"></script>
 </body>
 </html>
